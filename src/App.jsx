@@ -1,94 +1,155 @@
-import React, { useState } from 'react';
-import { marked } from 'marked';
-import html2pdf from 'html2pdf.js';
+import { useState } from 'react';
 
-// --- ICONOS ---
-const UserIcon = ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>;
-const BotIcon = ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>;
-const CopyIcon = ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>;
-const CheckIcon = ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>;
-const DownloadIcon = ({ className }) => <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
-
-// --- COMPONENTE MENSAJE ---
-const Message = ({ message }) => {
-  const isUser = message.role === 'user';
-  const [isCopied, setIsCopied] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-
-  const extractOdds = (content) => {
-    const oddsRegex = /\|\|ODDS:PLAINTIFF=(\d+)\|DEFENDANT=(\d+)\|\|/;
-    const match = content.match(oddsRegex);
-    if (match) return { cleanContent: content.replace(oddsRegex, '').trim(), odds: { plaintiff: parseInt(match[1]), defendant: parseInt(match[2]) } };
-    return { cleanContent: content, odds: null };
-  };
-
-  const { cleanContent } = isUser ? { cleanContent: message.content } : extractOdds(message.content);
-
-  const createMarkup = (content) => {
-    if (isUser) return { __html: content.replace(/\n/g, '<br />') };
-    return { __html: marked.parse(content) };
-  };
-
-  const handleCopy = () => {
-    if (isCopied) return;
-    navigator.clipboard.writeText(cleanContent).then(() => { setIsCopied(true); setTimeout(() => setIsCopied(false), 2000); });
-  };
-
-  const isFormalDocument = (content) => {
-    if (!content) return false;
-    const indicators = ["SUMA:", "S. J. L.", "S.J.L.", "EN LO PRINCIPAL", "C. JUEZ", "EXPEDIENTE", "VS.", "V S .", "AL JUZGADO", "SUPLICO AL JUZGADO", "IN THE COURT", "JUDICIAL DISTRICT", "CIVIL ACTION"];
-    return indicators.some(indicator => content.toUpperCase().includes(indicator));
-  };
-
-  const handleDownloadPDF = () => {
-    if (isDownloading || !cleanContent) return;
-    setIsDownloading(true);
-    const contentHtml = marked.parse(cleanContent);
-    const element = document.createElement('div');
-    element.style.cssText = 'position:absolute;left:-9999px;top:0;width:800px;';
-    element.innerHTML = `<div style="font-family:'Times New Roman',serif;color:#000;background:#fff;padding:40px;line-height:1.5;font-size:12pt;">${contentHtml}<div style="margin-top:50px;text-align:center;font-size:10pt;color:#666;border-top:1px solid #ddd;padding-top:10px;">Generado por Inteligencia Artificial - JusticeBot</div></div>`;
-    document.body.appendChild(element);
-    html2pdf().from(element).set({ margin:0.5, filename:'Documento_Legal.pdf', html2canvas:{scale:2}, jsPDF:{unit:'in',format:'letter'} }).save().then(() => { document.body.removeChild(element); setIsDownloading(false); });
-  };
-
-  const timeString = message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-
-  return (
-    <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} gap-1 mb-4`}>
-        <div className={`flex items-start gap-4 ${isUser ? 'justify-end' : 'justify-start'} w-full`}>
-        {!isUser && <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border-2 border-blue-400"><BotIcon className="w-6 h-6 text-blue-300" /></div>}
-        <div className="relative group max-w-xl w-full">
-            <div className={`px-5 py-3 rounded-2xl shadow-md prose prose-invert prose-p:my-2 prose-li:my-1 ${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-gray-700 text-gray-200 rounded-bl-none'}`}>
-                <div dangerouslySetInnerHTML={createMarkup(cleanContent)} />
-            </div>
-            {!isUser && cleanContent && (
-                <div className="flex gap-2 mt-2">
-                    {(!isUser && isFormalDocument(cleanContent)) && <button onClick={handleDownloadPDF} className="p-1 text-sm bg-gray-200 rounded hover:bg-gray-300 text-black flex items-center gap-1"><DownloadIcon className="w-4 h-4" /> PDF</button>}
-                    <button onClick={handleCopy} className="p-1 text-sm bg-gray-200 rounded hover:bg-gray-300 text-black flex items-center gap-1">{isCopied ? <CheckIcon className="w-4 h-4 text-green-600" /> : <CopyIcon className="w-4 h-4" />} Copiar</button>
-                </div>
-            )}
-        </div>
-        {isUser && <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border-2 border-gray-600"><UserIcon className="w-6 h-6 text-gray-300" /></div>}
-        </div>
-        {timeString && <span className="text-xs text-gray-500 px-14">{timeString}</span>}
-    </div>
-  );
-};
-
-// --- APP PRINCIPAL ---
 function App() {
-  const testMessages = [
-    { role: 'user', content: 'Hola, necesito redactar una demanda.', timestamp: new Date() },
-    { role: 'bot', content: 'Claro. **SUMA: DEMANDA DE DIVORCIO**. \n\nS.J.L.\n\nEN LO PRINCIPAL: Demanda de divorcio...', timestamp: new Date() }
-  ];
+  const [view, setView] = useState('login'); // 'login', 'register', 'dashboard'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [messages, setMessages] = useState([{ text: "Bienvenido, colega. Soy LexAI. ¿En qué puedo asistirle hoy?", type: "bot" }]);
+  const [inputMsg, setInputMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [plan, setPlan] = useState('');
 
+  // ⚠️ IMPORTANTE: Aquí va la dirección de tu Python. 
+  // Al estar en Vercel, necesitarás un backend en la nube (Render) pronto.
+  // Por ahora, intenta conectar a tu local (puede fallar por seguridad del navegador).
+  const API_URL = "http://127.0.0.1:8001"; 
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPlan(data.plan);
+        setView('dashboard');
+      } else {
+        alert(data.detail);
+      }
+    } catch (error) {
+      alert("Error de conexión. Asegúrate de que tu Python (Terminal negra) esté corriendo.");
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API_URL}/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: name, email, password })
+      });
+      if (res.ok) {
+        alert("Cuenta creada. Inicia sesión.");
+        setView('login');
+      } else {
+        alert("Error al registrar.");
+      }
+    } catch (error) {
+      alert("Error de conexión.");
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!inputMsg) return;
+    const newMsgs = [...messages, { text: inputMsg, type: "user" }];
+    setMessages(newMsgs);
+    setInputMsg('');
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/consulta-legal?email_usuario=${email}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto: inputMsg })
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (res.ok) {
+        setMessages([...newMsgs, { text: data.respuesta, type: "bot" }]);
+      } else {
+        setMessages([...newMsgs, { text: "Error: " + data.detail, type: "bot" }]);
+      }
+    } catch (error) {
+      setLoading(false);
+      setMessages([...newMsgs, { text: "Error de conexión con el servidor.", type: "bot" }]);
+    }
+  };
+
+  // VISTA DEL DASHBOARD (CHAT)
+  if (view === 'dashboard') {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', padding: '20px' }}>
+        <div className="chat-container">
+          <div style={{ padding: '20px', background: '#182235', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h2 style={{ margin: 0, fontFamily: 'Playfair Display', color: '#c5a059', fontSize: '1.4rem' }}>LexAI</h2>
+              <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Plan: {plan.toUpperCase()}</span>
+            </div>
+            <button onClick={() => setView('login')} style={{ width: 'auto', padding: '8px 15px', margin: 0, background: '#334155', color: 'white', border: '1px solid #475569' }}>Salir</button>
+          </div>
+
+          <div className="chat-messages">
+            {messages.map((msg, idx) => (
+              <div key={idx} className={`msg ${msg.type}`}>
+                {msg.text.split('\n').map((line, i) => <span key={i}>{line}<br/></span>)}
+              </div>
+            ))}
+            {loading && <div className="msg bot" style={{ color: '#94a3b8' }}>Analizando jurisprudencia...</div>}
+          </div>
+
+          <div style={{ padding: '20px', background: '#182235', display: 'flex', gap: '10px', borderTop: '1px solid #334155' }}>
+            <input 
+              type="text" 
+              value={inputMsg} 
+              onChange={(e) => setInputMsg(e.target.value)} 
+              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+              placeholder="Escriba su consulta..." 
+              style={{ margin: 0 }} 
+            />
+            <button onClick={sendMessage} style={{ width: '100px', margin: 0 }}>Enviar ➤</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // VISTA DE LOGIN / REGISTRO
   return (
-    <div className="min-h-screen bg-gray-900 p-8 flex flex-col items-center">
-      <h1 className="text-3xl font-bold text-white mb-8">JusticeBot Demo</h1>
-      <div className="w-full max-w-3xl bg-gray-800 p-6 rounded-lg shadow-xl">
-        {testMessages.map((msg, idx) => (
-          <Message key={idx} message={msg} />
-        ))}
+    <div className="split-screen">
+      <div className="left-panel">
+        <h1>LexAI</h1>
+        <p>Su socio jurídico impulsado por Inteligencia Artificial.<br />Analice casos y redacte escritos en segundos.</p>
+      </div>
+      <div className="right-panel">
+        <div className="form-box">
+          <div className="tabs">
+            <div className={`tab ${view === 'login' ? 'active' : ''}`} onClick={() => setView('login')}>Ingresar</div>
+            <div className={`tab ${view === 'register' ? 'active' : ''}`} onClick={() => setView('register')}>Registrarse</div>
+          </div>
+
+          {view === 'login' ? (
+            <form onSubmit={handleLogin}>
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8', fontSize: '0.9rem' }}>Correo Profesional</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="abogado@firma.com" required />
+              </div>
+              <div style={{ marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8', fontSize: '0.9rem' }}>Contraseña</label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
+              </div>
+              <button type="submit">Entrar al Sistema</button>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister}>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre completo" required />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo electrónico" required />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Crear contraseña" required />
+              <button type="submit">Crear Cuenta Gratuita</button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
