@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 function App() {
-  const [view, setView] = useState('login'); // 'login', 'register', 'dashboard'
+  const [view, setView] = useState('login'); 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -10,9 +10,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState('');
 
-  // ⚠️ IMPORTANTE: Aquí va la dirección de tu Python. 
-  // Al estar en Vercel, necesitarás un backend en la nube (Render) pronto.
-  // Por ahora, intenta conectar a tu local (puede fallar por seguridad del navegador).
+  // ⚠️ IMPORTANTE: Aquí va la dirección de tu Python local
   const API_URL = "http://127.0.0.1:8001"; 
 
   const handleLogin = async (e) => {
