@@ -11,7 +11,7 @@ function App() {
   const [plan, setPlan] = useState('');
 
   // CAMBIAR LUEGO: Esta dirección es local. En la nube no funcionará el chat todavía.
-  const API_URL = "http://127.0.0.1:8001"; 
+  const API_URL = "https://cerebro-legal.onrender.com"; 
 
   // ... (Resto del código igual al anterior para ahorrar espacio, pero asegúrate de pegarlo todo)
   // SI NECESITAS EL CÓDIGO COMPLETO OTRA VEZ, PÍDEMELO Y TE LO PEGO ENTERO.
