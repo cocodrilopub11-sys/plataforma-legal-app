@@ -1,85 +1,22 @@
-import { useState } from 'react';
+import React from 'react';
 
 function App() {
-  const [view, setView] = useState('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [messages, setMessages] = useState([{ text: "Bienvenido, colega. Soy LexAI. ¿En qué puedo asistirle hoy?", type: "bot" }]);
-  const [inputMsg, setInputMsg] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [plan, setPlan] = useState('');
-
-  // CAMBIAR LUEGO: Esta dirección es local. En la nube no funcionará el chat todavía.
-  const API_URL = "https://cerebro-legal.onrender.com"; 
-
-  // ... (Resto del código igual al anterior para ahorrar espacio, pero asegúrate de pegarlo todo)
-  // SI NECESITAS EL CÓDIGO COMPLETO OTRA VEZ, PÍDEMELO Y TE LO PEGO ENTERO.
-  // POR AHORA, ASEGÚRATE DE QUE DIGA "LexAI" en el <h2> de abajo.
-
-  // VISTA DEL DASHBOARD
-  if (view === 'dashboard') {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', padding: '20px' }}>
-        <div className="chat-container">
-          <div style={{ padding: '20px', background: '#182235', borderBottom: '1px solid #334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              {/* ASEGÚRATE QUE AQUÍ DIGA LexAI */}
-              <h2 style={{ margin: 0, fontFamily: 'Playfair Display', color: '#c5a059', fontSize: '1.4rem' }}>LexAI</h2>
-              <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Plan: {plan.toUpperCase()}</span>
-            </div>
-            <button onClick={() => setView('login')} style={{ width: 'auto', padding: '8px 15px', margin: 0, background: '#334155', color: 'white', border: '1px solid #475569' }}>Salir</button>
-          </div>
-           {/* ... resto del chat ... */}
-           <div className="chat-messages">
-            {messages.map((msg, idx) => (
-              <div key={idx} className={`msg ${msg.type}`}>
-                {msg.text.split('\n').map((line, i) => <span key={i}>{line}<br/></span>)}
-              </div>
-            ))}
-            {loading && <div className="msg bot" style={{ color: '#94a3b8' }}>Analizando jurisprudencia...</div>}
-          </div>
-          <div style={{ padding: '20px', background: '#182235', display: 'flex', gap: '10px', borderTop: '1px solid #334155' }}>
-            <input type="text" value={inputMsg} onChange={(e) => setInputMsg(e.target.value)} placeholder="Escriba su consulta..." style={{ margin: 0 }} />
-            <button onClick={sendMessage} style={{ width: '100px', margin: 0 }}>Enviar ➤</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // VISTA LOGIN
   return (
-    <div className="split-screen">
-      <div className="left-panel">
-         {/* ASEGÚRATE QUE AQUÍ DIGA LexAI */}
-        <h1>LexAI</h1>
-        <p>Su socio jurídico impulsado por IA.</p>
-      </div>
-      <div className="right-panel">
-        {/* ... formularios de login ... */}
-         <div className="form-box">
-          <div className="tabs">
-            <div className={`tab ${view === 'login' ? 'active' : ''}`} onClick={() => setView('login')}>Ingresar</div>
-            <div className={`tab ${view === 'register' ? 'active' : ''}`} onClick={() => setView('register')}>Registrarse</div>
-          </div>
-          {view === 'login' ? (
-            <form onSubmit={handleLogin}>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo" required style={{marginBottom: 10}}/>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" required style={{marginBottom: 10}}/>
-              <button type="submit">Entrar</button>
-            </form>
-          ) : (
-            <form onSubmit={handleRegister}>
-              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" required style={{marginBottom: 10}}/>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo" required style={{marginBottom: 10}}/>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" required style={{marginBottom: 10}}/>
-              <button type="submit">Crear Cuenta</button>
-            </form>
-          )}
-        </div>
-      </div>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column',
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      height: '100vh', 
+      color: 'gold',
+      textAlign: 'center'
+    }}>
+      <h1 style={{ fontSize: '3rem' }}>¡ESTOY VIVO! 🚀</h1>
+      <p style={{ color: 'white', fontSize: '1.5rem' }}>
+        Si lees esto, la página web funciona perfectamente.
+      </p>
     </div>
   );
 }
+
 export default App;
