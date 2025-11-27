@@ -125,3 +125,5 @@ async def consultar_ia(consulta: ConsultaLegal, email_usuario: str):
         print(f"Error IA: {e}")
         # Esto imprimirá el error real en los logs si vuelve a fallar
         raise HTTPException(status_code=500, detail=f"Error del motor IA: {str(e)}")
+    
+    # Forzando actualización de Render
