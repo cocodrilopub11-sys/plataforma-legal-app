@@ -1,4 +1,7 @@
-git add .
+fastapi>=0.109.0
+uvicorn>=0.27.0
+google-generativeai>=0.8.3
+pydantic>=2.0.0
 *(Enter)*
 
 ```bash
