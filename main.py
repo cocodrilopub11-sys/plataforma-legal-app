@@ -31,7 +31,7 @@ print("--- FIN DIAGNÓSTICO ---")
 if not api_key_segura:
     print("⚠️ ERROR CRÍTICO: El servidor no puede arrancar sin la API KEY")
 else:
-    # Limpieza extra de seguridad
+    # Limpieza extra de seguridad por si acaso
     api_key_limpia = api_key_segura.replace('"', '').replace("'", "").strip()
     genai.configure(api_key=api_key_limpia)
 
