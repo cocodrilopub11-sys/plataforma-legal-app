@@ -7,18 +7,17 @@ from enum import Enum
 from datetime import datetime
 
 # ==========================================
-# 1. CONFIGURACIÓN SEGURA (USANDO LA CAJA FUERTE)
+# 1. CONFIGURACIÓN SEGURA (CON CAJA FUERTE)
 # ==========================================
 
 # Buscamos la llave en las variables de entorno de Render
 api_key_segura = os.environ.get("GOOGLE_API_KEY")
 
-# --- INICIO DIAGNÓSTICO ---
+# --- INICIO DIAGNÓSTICO (Para ver en los logs si la clave está bien) ---
 print("--- INICIO DIAGNÓSTICO ---")
 if api_key_segura:
     print(f"🔑 Longitud de la clave: {len(api_key_segura)}")
     print(f"🔑 Primeros 3 caracteres: '{api_key_segura[:3]}'")
-    print(f"🔑 Últimos 3 caracteres: '{api_key_segura[-3:]}'")
     
     if '"' in api_key_segura or "'" in api_key_segura:
         print("🚨 ALERTA ROJA: La clave tiene comillas atrapadas!")
@@ -27,26 +26,31 @@ if api_key_segura:
 else:
     print("🚨 ALERTA ROJA: Render no está encontrando la variable GOOGLE_API_KEY")
 print("--- FIN DIAGNÓSTICO ---")
-# --- FIN DIAGNÓSTICO ---
 
+# Configuración de Google
 if not api_key_segura:
-    print("⚠️ ERROR: No encontré la variable GOOGLE_API_KEY en Render")
+    print("⚠️ ERROR CRÍTICO: El servidor no puede arrancar sin la API KEY")
 else:
     genai.configure(api_key=api_key_segura)
 
+# ==========================================
+# 2. PERSONALIDAD DE LA IA
+# ==========================================
 INSTRUCCIONES_ABOGADO = """
-Eres un asistente jurídico experto y formal llamado LexAI.
-Tu misión es ayudar a abogados y estudiantes de derecho.
-Responde de manera precisa, citando leyes cuando sea posible.
-Si no sabes una respuesta, no inventes leyes, di que necesitas investigar más.
-Tu tono es profesional pero claro.
+Eres LexAI, un asistente jurídico experto internacional.
+Tu objetivo es brindar orientación legal preliminar clara, profesional y empática.
+
+IMPORTANTE:
+1. El usuario te indicará su ROL (Demandante/Plaintiff o Demandado/Defendant) y el PAÍS.
+2. Debes adaptar tus respuestas a la legislación de ese PAÍS específico.
+3. Si el país es "Inmigración Global", responde con leyes internacionales o generales.
+4. Siempre aclara que eres una IA y que esto no sustituye el consejo de un abogado humano.
+5. Sé estructurado: Usa puntos clave y pasos a seguir.
 """
 
-# Usamos el modelo estándar
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash", 
-    system_instruction=INSTRUCCIONES_ABOGADO
-)
+# Configuración de modelos (Estrategia Doble: Flash primero, luego Pro)
+model_flash = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=INSTRUCCIONES_ABOGADO)
+model_pro = genai.GenerativeModel(model_name="gemini-pro", system_instruction=INSTRUCCIONES_ABOGADO)
 
 app = FastAPI()
 
@@ -59,29 +63,11 @@ app.add_middleware(
 )
 
 # ==========================================
-# 2. BASE DE DATOS Y MODELOS
+# 3. MODELOS DE DATOS
 # ==========================================
 
-class Plan(str, Enum):
-    GRATIS = "gratis"       
-    MENSUAL = "mensual"     
-    VITALICIO = "vitalicio" 
-    ADMIN = "admin"         
-
-class UsuarioModelo(BaseModel):
-    email: str
-    password: str
-    nombre: str
-    plan: Plan = Plan.GRATIS
-    consultas_realizadas: int = 0
-    activo: bool = True 
-    fecha_registro: datetime = datetime.now()
-
-users_db = []
-
-# ==========================================
-# 3. RUTAS
-# ==========================================
+class ConsultaLegal(BaseModel):
+    texto: str 
 
 class SolicitudRegistro(BaseModel):
     nombre: str
@@ -92,51 +78,45 @@ class SolicitudLogin(BaseModel):
     email: str
     password: str
 
-class ConsultaLegal(BaseModel):
-    texto: str
+# Base de datos temporal
+users_db = []
+
+# ==========================================
+# 4. RUTAS (ENDPOINTS)
+# ==========================================
 
 @app.get("/")
 def home():
-    return {"mensaje": "Cerebro LexAI Online 🧠"}
+    return {"mensaje": "Cerebro LexAI Online y Listo 🧠"}
 
 @app.post("/register")
 def registrar_usuario(datos: SolicitudRegistro):
-    for u in users_db:
-        if u['email'] == datos.email:
-            raise HTTPException(status_code=400, detail="El correo ya existe")
-    
-    nuevo_usuario = {
-        "email": datos.email,
-        "password": datos.password,
-        "nombre": datos.nombre,
-        "plan": Plan.GRATIS,
-        "consultas_realizadas": 0,
-        "activo": True,
-        "fecha_registro": datetime.now()
-    }
-    users_db.append(nuevo_usuario)
     return {"mensaje": "Registro exitoso", "usuario": datos.nombre}
 
 @app.post("/login")
 def iniciar_sesion(datos: SolicitudLogin):
-    for u in users_db:
-        if u['email'] == datos.email and u['password'] == datos.password:
-            return {
-                "mensaje": "Login correcto", 
-                "usuario": u['nombre'], 
-                "email": u['email'], 
-                "plan": u['plan']
-            }
-    raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+    return {
+        "mensaje": "Login correcto", 
+        "usuario": "Usuario Demo", 
+        "email": datos.email, 
+        "plan": "Gratis"
+    }
 
 @app.post("/consulta-legal")
-async def consultar_ia(consulta: ConsultaLegal, email_usuario: str):
+async def consultar_ia(consulta: ConsultaLegal, email_usuario: str = "demo"):
     try:
-        chat = model.start_chat(history=[])
+        # INTENTO 1: Usar modelo Flash (Rápido)
+        chat = model_flash.start_chat(history=[])
         response = chat.send_message(consulta.texto)
         return {"respuesta": response.text}
             
-    except Exception as e:
-        print(f"Error IA: {e}")
-        # Esto imprimirá el error real en los logs si vuelve a fallar
-        raise HTTPException(status_code=500, detail=f"Error del motor IA: {str(e)}")
+    except Exception as e_flash:
+        print(f"⚠️ Error con Flash: {e_flash}. Intentando con Pro...")
+        try:
+            # INTENTO 2: Usar modelo Pro (Respaldo compatible)
+            chat = model_pro.start_chat(history=[])
+            response = chat.send_message(consulta.texto)
+            return {"respuesta": response.text}
+        except Exception as e_pro:
+            print(f"🚨 Error Fatal con ambos modelos: {e_pro}")
+            raise HTTPException(status_code=500, detail="Error de conexión con la IA. Por favor intenta más tarde.")
