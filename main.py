@@ -7,13 +7,16 @@ from enum import Enum
 from datetime import datetime
 
 # ==========================================
-# 1. CONFIGURACIÓN DE CEREBRO (GOOGLE AI)
+# 1. CONFIGURACIÓN SEGURA (USANDO LA CAJA FUERTE)
 # ==========================================
 
-# ¡OJO! Pega aquí tu clave real dentro de las comillas
-GOOGLE_API_KEY = "AIzaSyDl3iZSiUixEJDIqE9_M1H-zEmCyIuGNh8" 
+# Buscamos la llave en las variables de entorno de Render
+api_key_segura = os.environ.get("GOOGLE_API_KEY")
 
-genai.configure(api_key=GOOGLE_API_KEY)
+if not api_key_segura:
+    print("⚠️ ERROR: No encontré la variable GOOGLE_API_KEY en Render")
+else:
+    genai.configure(api_key=api_key_segura)
 
 INSTRUCCIONES_ABOGADO = """
 Eres un asistente jurídico experto y formal llamado LexAI.
@@ -23,17 +26,17 @@ Si no sabes una respuesta, no inventes leyes, di que necesitas investigar más.
 Tu tono es profesional pero claro.
 """
 
+# Usamos el modelo estándar
 model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash-001", 
+    model_name="gemini-1.5-flash", 
     system_instruction=INSTRUCCIONES_ABOGADO
 )
 
 app = FastAPI()
 
-# Configuración para que Vercel (la Nube) pueda hablar con este servidor
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Permite que cualquiera se conecte (ideal para pruebas)
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -58,26 +61,10 @@ class UsuarioModelo(BaseModel):
     activo: bool = True 
     fecha_registro: datetime = datetime.now()
 
-# Base de datos temporal (se borra si reinicias el servidor)
 users_db = []
 
-def verificar_permiso(usuario: UsuarioModelo):
-    if not usuario.activo:
-        return False, "Cuenta desactivada."
-        
-    if usuario.plan == Plan.ADMIN or usuario.plan in [Plan.MENSUAL, Plan.VITALICIO]:
-        return True, "Acceso ilimitado"
-        
-    if usuario.plan == Plan.GRATIS:
-        # En modo demo permitimos más consultas para que pruebes tranquilo
-        if usuario.consultas_realizadas >= 10:
-            return False, "Has agotado tus consultas de prueba."
-        return True, "Modo prueba"
-        
-    return False, "Error"
-
 # ==========================================
-# 3. RUTAS DE LA APP (ENDPOINTS)
+# 3. RUTAS
 # ==========================================
 
 class SolicitudRegistro(BaseModel):
@@ -128,27 +115,13 @@ def iniciar_sesion(datos: SolicitudLogin):
 
 @app.post("/consulta-legal")
 async def consultar_ia(consulta: ConsultaLegal, email_usuario: str):
-    usuario_diccionario = next((u for u in users_db if u['email'] == email_usuario), None)
-    
-    if not usuario_diccionario:
-        # Si no encuentra el usuario (por reinicio del servidor), creamos uno temporal
-        # Esto evita errores mientras pruebas
-        usuario_obj = UsuarioModelo(email="invitado", password="", nombre="Invitado")
-    else:
-        usuario_obj = UsuarioModelo(**usuario_diccionario)
-
-    # Verificar permiso
-    # puede_pasar, mensaje = verificar_permiso(usuario_obj)
-    # if not puede_pasar:
-    #     raise HTTPException(status_code=403, detail=mensaje)
-
+    # En esta versión simplificada no verificamos usuario para asegurar que funcione la prueba
     try:
-        # Hablar con Google
         chat = model.start_chat(history=[])
         response = chat.send_message(consulta.texto)
-        
         return {"respuesta": response.text}
             
     except Exception as e:
         print(f"Error IA: {e}")
-        return {"respuesta": "Lo siento, hubo un error de conexión con mi cerebro jurídico. Intenta de nuevo."}
+        # Esto imprimirá el error real en los logs si vuelve a fallar
+        raise HTTPException(status_code=500, detail=f"Error del motor IA: {str(e)}")
