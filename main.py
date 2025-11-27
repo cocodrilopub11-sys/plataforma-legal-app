@@ -11,7 +11,7 @@ from datetime import datetime
 # ==========================================
 
 # ¡OJO! Pega aquí tu clave real dentro de las comillas
-GOOGLE_API_KEY = "AIzaSyBdO5kZ8BR-d2iLNRTfBpcm5IZDFuGi8TQ" 
+GOOGLE_API_KEY = "AIzaSyDl3iZSiUixEJDIqE9_M1H-zEmCyIuGNh8" 
 
 genai.configure(api_key=GOOGLE_API_KEY)
 
