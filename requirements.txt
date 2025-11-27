@@ -1,0 +1,17 @@
+git add .
+*(Enter)*
+
+```bash
+git commit -m "Corrigiendo lista de requerimientos vacia"
+*(Enter)*
+
+```bash
+git push
+*(Enter)*
+
+#### PASO 3: Desplegar en Render
+
+1.  Ve a tu panel de **Render**.
+2.  Haz clic en **"Manual Deploy"** -> **"Clear build cache & deploy"**.
+
+**¡Ahora sí va a funcionar!** Render leerá la lista correcta, instalará `uvicorn` y tu servidor arrancará.
