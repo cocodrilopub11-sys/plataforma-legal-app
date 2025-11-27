@@ -1,17 +1,74 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@700&display=swap');
-:root { --bg: #0f172a; --card: #1e293b; --gold: #c5a059; --text: #f8fafc; }
-body { margin: 0; font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+:root {
+  --bg: #0f111a; /* Fondo muy oscuro */
+  --card-bg: #1e2230;
+  --primary: #0055ff; /* Azul brillante */
+  --primary-hover: #0044cc;
+  --text: #ffffff;
+  --text-dim: #9ca3af;
+  --border: #2d3748;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Utilidades */
+.hidden { display: none; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.w-full { width: 100%; }
+.h-screen { height: 100vh; }
+
+/* Login Styles (Mantenemos lo básico elegante) */
 .split-screen { display: flex; width: 100vw; height: 100vh; }
-.left-panel { flex: 1; padding: 4rem; display: flex; flex-direction: column; justify-content: center; background: linear-gradient(135deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8)); }
+.left-panel { flex: 1; padding: 4rem; display: flex; flex-direction: column; justify-content: center; background: linear-gradient(135deg, #0f172a, #1e293b); }
 .right-panel { width: 500px; background: var(--bg); padding: 3rem; display: flex; flex-direction: column; justify-content: center; }
-h1 { font-family: 'Playfair Display', serif; font-size: 3.5rem; color: var(--gold); margin-bottom: 1rem; margin-top: 0; }
-.form-box { background: var(--card); padding: 2.5rem; border-radius: 12px; border: 1px solid #334155; }
-input { width: 100%; padding: 12px; margin-bottom: 15px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 6px; box-sizing: border-box; }
-button { width: 100%; padding: 14px; background: var(--gold); border: none; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 10px; }
-.chat-container { width: 100%; max-width: 800px; height: 80vh; background: var(--card); border-radius: 12px; display: flex; flex-direction: column; border: 1px solid #334155; overflow: hidden; }
-.chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-.msg.user { background: #334155; align-self: flex-end; color: white; padding: 10px; border-radius: 8px;}
-.msg.bot { background: #0f172a; border: 1px solid var(--gold); align-self: flex-start; color: #e2e8f0; padding: 10px; border-radius: 8px;}
-.tab { padding: 10px; cursor: pointer; color: #94a3b8; flex:1; text-align: center;}
-.tab.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
-.tabs { display: flex; margin-bottom: 20px; }
+.form-box { background: var(--card-bg); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border); }
+input { width: 100%; padding: 12px; margin-bottom: 15px; background: #0f111a; border: 1px solid var(--border); color: white; border-radius: 6px; box-sizing: border-box; }
+button.btn-login { width: 100%; padding: 14px; background: #c5a059; color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 10px; }
+
+/* --- NUEVO DISEÑO TIPO APP --- */
+.app-container { max-width: 900px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; height: 100vh; }
+
+/* Header Pestañas */
+.country-tabs { display: flex; gap: 10px; margin-bottom: 30px; justify-content: center; flex-wrap: wrap; }
+.country-tab { 
+  background: #2d3748; color: var(--text-dim); padding: 8px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; border: 1px solid transparent; transition: 0.2s;
+}
+.country-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+.country-tab:hover:not(.active) { background: #374151; }
+
+/* Grid de Tarjetas */
+.suggestions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 30px; }
+.card { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+.card:hover { border-color: var(--primary); transform: translateY(-2px); }
+.card h3 { margin: 0 0 10px 0; font-size: 1rem; color: white; }
+.card p { margin: 0; font-size: 0.85rem; color: var(--text-dim); line-height: 1.4; }
+
+/* Input Area Compleja */
+.input-area { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-top: auto; }
+.role-selector { display: flex; background: #0f111a; border-radius: 6px; padding: 4px; margin-bottom: 15px; }
+.role-btn { flex: 1; padding: 8px; text-align: center; cursor: pointer; color: var(--text-dim); border-radius: 4px; font-size: 0.9rem; font-weight: 600; }
+.role-btn.active { background: var(--primary); color: white; } /* Azul para seleccionado */
+.role-btn.active-defendant { background: var(--primary); color: white; }
+
+.chat-textarea { 
+  width: 100%; background: transparent; border: none; color: white; font-size: 1rem; resize: none; outline: none; min-height: 80px; font-family: 'Inter', sans-serif;
+}
+.input-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+.btn-send { background: var(--primary); color: white; padding: 8px 24px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
+.btn-send:hover { background: var(--primary-hover); }
+
+/* Chat Messages (Cuando ya hablas) */
+.chat-history { flex: 1; overflow-y: auto; margin-bottom: 20px; padding-right: 10px; display: flex; flex-direction: column; gap: 15px; }
+.msg-bubble { padding: 15px; border-radius: 8px; max-width: 80%; line-height: 1.5; }
+.msg-user { background: var(--primary); align-self: flex-end; color: white; }
+.msg-bot { background: var(--card-bg); align-self: flex-start; border: 1px solid var(--border); color: #e2e8f0; }
