@@ -24,7 +24,7 @@ Tu tono es profesional pero claro.
 """
 
 model = genai.GenerativeModel(
-    model_name="gemini-pro", 
+    model_name="gemini-1.5-flash", 
     system_instruction=INSTRUCCIONES_ABOGADO
 )
 
