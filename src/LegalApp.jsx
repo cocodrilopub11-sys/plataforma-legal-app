@@ -10,9 +10,8 @@ function LegalApp() {
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState('');
 
-  // 👇👇👇 ¡IMPORTANTE! PEGA TU LINK DE RENDER AQUÍ ENTRE LAS COMILLAS 👇👇👇
+  // 👇👇👇 CONFIRMA QUE ESTA SEA TU URL DE RENDER 👇👇👇
   const API_URL = "https://cerebro-legal.onrender.com"; 
-  // (Ejemplo: https://cerebro-legal.onrender.com)
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -30,7 +29,7 @@ function LegalApp() {
       }
     } catch (error) {
       console.error(error);
-      alert("No se pudo conectar con el servidor. Verifica que la URL de Render sea correcta.");
+      alert("Error conectando con el servidor.");
     }
   };
 
@@ -42,14 +41,14 @@ function LegalApp() {
         body: JSON.stringify({ nombre: name, email, password })
       });
       if (res.ok) {
-        alert("Cuenta creada con éxito. Por favor inicia sesión.");
+        alert("Cuenta creada. Inicia sesión.");
         setView('login');
       } else {
         const data = await res.json();
         alert("Error: " + data.detail);
       }
     } catch (error) {
-      alert("Error de conexión al registrarse.");
+      alert("Error de conexión.");
     }
   };
 
@@ -74,11 +73,10 @@ function LegalApp() {
       }
     } catch (error) {
       setLoading(false);
-      setMessages([...newMsgs, { text: "Error de conexión con la IA.", type: "bot" }]);
+      setMessages([...newMsgs, { text: "Error de conexión.", type: "bot" }]);
     }
   };
 
-  // --- VISTA DASHBOARD (CHAT) ---
   if (view === 'dashboard') {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a', padding: '20px' }}>
@@ -90,7 +88,6 @@ function LegalApp() {
             </div>
             <button onClick={() => setView('login')} style={{ width: 'auto', padding: '8px 15px', margin: 0, background: '#334155', color: 'white', border: '1px solid #475569' }}>Salir</button>
           </div>
-
           <div className="chat-messages">
             {messages.map((msg, idx) => (
               <div key={idx} className={`msg ${msg.type}`}>
@@ -99,16 +96,8 @@ function LegalApp() {
             ))}
             {loading && <div className="msg bot" style={{ color: '#94a3b8' }}>Analizando jurisprudencia...</div>}
           </div>
-
           <div style={{ padding: '20px', background: '#182235', display: 'flex', gap: '10px', borderTop: '1px solid #334155' }}>
-            <input 
-              type="text" 
-              value={inputMsg} 
-              onChange={(e) => setInputMsg(e.target.value)} 
-              onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-              placeholder="Escriba su consulta..." 
-              style={{ margin: 0 }} 
-            />
+            <input type="text" value={inputMsg} onChange={(e) => setInputMsg(e.target.value)} placeholder="Escriba su consulta..." style={{ margin: 0 }} />
             <button onClick={sendMessage} style={{ width: '100px', margin: 0 }}>Enviar ➤</button>
           </div>
         </div>
@@ -116,12 +105,11 @@ function LegalApp() {
     );
   }
 
-  // --- VISTA LOGIN ---
   return (
     <div className="split-screen">
       <div className="left-panel">
         <h1>LexAI</h1>
-        <p>Su socio jurídico impulsado por Inteligencia Artificial.<br />Analice casos y redacte escritos en segundos.</p>
+        <p>Su socio jurídico impulsado por IA.</p>
       </div>
       <div className="right-panel">
         <div className="form-box">
@@ -129,31 +117,18 @@ function LegalApp() {
             <div className={`tab ${view === 'login' ? 'active' : ''}`} onClick={() => setView('login')}>Ingresar</div>
             <div className={`tab ${view === 'register' ? 'active' : ''}`} onClick={() => setView('register')}>Registrarse</div>
           </div>
-
           {view === 'login' ? (
             <form onSubmit={handleLogin}>
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8', fontSize: '0.9rem' }}>Correo Profesional</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="abogado@firma.com" required />
-              </div>
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8', fontSize: '0.9rem' }}>Contraseña</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
-              </div>
-              <button type="submit">Entrar al Sistema</button>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo" required style={{marginBottom: 10}}/>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" required style={{marginBottom: 10}}/>
+              <button type="submit">Entrar</button>
             </form>
           ) : (
             <form onSubmit={handleRegister}>
-              <div style={{ marginBottom: '15px' }}>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre completo" required />
-              </div>
-              <div style={{ marginBottom: '15px' }}>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo electrónico" required />
-              </div>
-              <div style={{ marginBottom: '15px' }}>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Crear contraseña" required />
-              </div>
-              <button type="submit">Crear Cuenta Gratuita</button>
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" required style={{marginBottom: 10}}/>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Correo" required style={{marginBottom: 10}}/>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Contraseña" required style={{marginBottom: 10}}/>
+              <button type="submit">Crear Cuenta</button>
             </form>
           )}
         </div>
@@ -161,5 +136,4 @@ function LegalApp() {
     </div>
   );
 }
-
 export default LegalApp;
