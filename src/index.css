@@ -88,3 +88,31 @@ body {
   .form-box { padding: 20px; }
   .grid-cards { grid-template-columns: 1fr; }
 }
+/* --- AGREGAR AL FINAL DE INDEX.CSS --- */
+
+/* Pestañas de Login/Registro */
+.login-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.login-tab {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text-gray);
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.login-tab:hover {
+  color: white;
+}
+
+.login-tab.active {
+  color: var(--gold);
+  border-bottom: 2px solid var(--gold);
+  font-weight: 700;
+}
