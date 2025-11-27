@@ -13,6 +13,22 @@ from datetime import datetime
 # Buscamos la llave en las variables de entorno de Render
 api_key_segura = os.environ.get("GOOGLE_API_KEY")
 
+# --- INICIO DIAGNÓSTICO ---
+print("--- INICIO DIAGNÓSTICO ---")
+if api_key_segura:
+    print(f"🔑 Longitud de la clave: {len(api_key_segura)}")
+    print(f"🔑 Primeros 3 caracteres: '{api_key_segura[:3]}'")
+    print(f"🔑 Últimos 3 caracteres: '{api_key_segura[-3:]}'")
+    
+    if '"' in api_key_segura or "'" in api_key_segura:
+        print("🚨 ALERTA ROJA: La clave tiene comillas atrapadas!")
+    if " " in api_key_segura:
+        print("🚨 ALERTA ROJA: La clave tiene espacios en blanco!")
+else:
+    print("🚨 ALERTA ROJA: Render no está encontrando la variable GOOGLE_API_KEY")
+print("--- FIN DIAGNÓSTICO ---")
+# --- FIN DIAGNÓSTICO ---
+
 if not api_key_segura:
     print("⚠️ ERROR: No encontré la variable GOOGLE_API_KEY en Render")
 else:
@@ -115,7 +131,6 @@ def iniciar_sesion(datos: SolicitudLogin):
 
 @app.post("/consulta-legal")
 async def consultar_ia(consulta: ConsultaLegal, email_usuario: str):
-    # En esta versión simplificada no verificamos usuario para asegurar que funcione la prueba
     try:
         chat = model.start_chat(history=[])
         response = chat.send_message(consulta.texto)
@@ -125,5 +140,3 @@ async def consultar_ia(consulta: ConsultaLegal, email_usuario: str):
         print(f"Error IA: {e}")
         # Esto imprimirá el error real en los logs si vuelve a fallar
         raise HTTPException(status_code=500, detail=f"Error del motor IA: {str(e)}")
-    
-    # Forzando actualización de Render
