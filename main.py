@@ -31,7 +31,9 @@ print("--- FIN DIAGNÓSTICO ---")
 if not api_key_segura:
     print("⚠️ ERROR CRÍTICO: El servidor no puede arrancar sin la API KEY")
 else:
-    genai.configure(api_key=api_key_segura)
+    # Limpieza extra de seguridad
+    api_key_limpia = api_key_segura.replace('"', '').replace("'", "").strip()
+    genai.configure(api_key=api_key_limpia)
 
 # ==========================================
 # 2. PERSONALIDAD DE LA IA
@@ -106,6 +108,7 @@ def iniciar_sesion(datos: SolicitudLogin):
 async def consultar_ia(consulta: ConsultaLegal, email_usuario: str = "demo"):
     try:
         # INTENTO 1: Usar modelo Flash (Rápido)
+        print("🤖 Intentando con Gemini 1.5 Flash...")
         chat = model_flash.start_chat(history=[])
         response = chat.send_message(consulta.texto)
         return {"respuesta": response.text}
@@ -114,6 +117,7 @@ async def consultar_ia(consulta: ConsultaLegal, email_usuario: str = "demo"):
         print(f"⚠️ Error con Flash: {e_flash}. Intentando con Pro...")
         try:
             # INTENTO 2: Usar modelo Pro (Respaldo compatible)
+            print("🐢 Intentando con Gemini Pro...")
             chat = model_pro.start_chat(history=[])
             response = chat.send_message(consulta.texto)
             return {"respuesta": response.text}
