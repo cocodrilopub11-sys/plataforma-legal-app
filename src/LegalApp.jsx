@@ -3,65 +3,147 @@ import { useState } from 'react';
 function LegalApp() {
   // Estados
   const [country, setCountry] = useState('EE.UU.');
-  const [role, setRole] = useState('Defendant'); // Por defecto azul en la foto
+  const [role, setRole] = useState('Defendant'); 
   const [inputMsg, setInputMsg] = useState('');
   
-  // Esto simula el envío (puedes conectar tu lógica real aquí después)
-  const sendMessage = () => {
-    if(!inputMsg) return;
-    alert("Enviando: " + inputMsg); 
-    setInputMsg('');
+  // Estados de lógica (Chat y Login)
+  const [view, setView] = useState('login'); 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [messages, setMessages] = useState([]); 
+  const [loading, setLoading] = useState(false);
+  const [plan, setPlan] = useState('');
+
+  // 👇 TU URL DE RENDER 👇
+  const API_URL = "https://cerebro-legal.onrender.com"; 
+
+  // --- LOGIN ---
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPlan(data.plan || 'Gratis');
+        setView('dashboard');
+      } else {
+        alert("Error: " + data.detail);
+      }
+    } catch (error) {
+      console.error(error);
+      // Modo demo si falla conexión para que veas el diseño
+      if(email && password) setView('dashboard'); 
+    }
   };
 
-  return (
-    <div className="app-container">
-      
-      {/* 1. NAV SUPERIOR */}
-      <div className="top-nav">
-        <button 
-          className={`nav-btn ${country === 'EE.UU.' ? 'active' : ''}`} 
-          onClick={() => setCountry('EE.UU.')}>EE.UU.</button>
-        <button className="nav-btn">Chile</button>
-        <button className="nav-btn">México</button>
-        <button className="nav-btn">España</button>
-        <button className="nav-btn purple">Inmigración Global</button>
-      </div>
+  // --- ENVIAR MENSAJE ---
+  const sendMessage = async (textoOverride) => {
+    const textoFinal = textoOverride || inputMsg;
+    if (!textoFinal) return;
 
-      {/* 2. CAJA PRINCIPAL */}
-      <div className="hero-section">
+    const newMsgs = [...messages, { text: textoFinal, type: "user" }];
+    setMessages(newMsgs);
+    setInputMsg('');
+    setLoading(true);
+
+    const promptContext = `Rol: ${role}. País: ${country}. Consulta: ${textoFinal}`;
+
+    try {
+      const res = await fetch(`${API_URL}/consulta-legal?email_usuario=${email || 'demo'}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto: promptContext })
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (res.ok) {
+        setMessages([...newMsgs, { text: data.respuesta, type: "bot" }]);
+      } else {
+        setMessages([...newMsgs, { text: "Error: " + data.detail, type: "bot" }]);
+      }
+    } catch (error) {
+      setLoading(false);
+      setMessages([...newMsgs, { text: "Error de conexión con la IA.", type: "bot" }]);
+    }
+  };
+
+  // ---------------------------------------
+  // VISTA: DASHBOARD
+  // ---------------------------------------
+  if (view === 'dashboard') {
+    return (
+      <div className="app-container">
         
-        <h2 style={{textAlign: 'center', marginBottom: '20px', fontSize:'1.5rem'}}>
-          ¿Cómo puedo ayudarte hoy?
-        </h2>
-
-        {/* GRID DE 4 TARJETAS */}
-        <div className="grid-cards">
-          <div className="info-card">
-            <h3>Producto Defectuoso</h3>
-            <p>Compré una laptop que dejó de funcionar después de una semana. ¿Cuáles son mis derechos?</p>
-          </div>
-          <div className="info-card">
-            <h3>Estafa en Marketplace</h3>
-            <p>Pagué por un artículo, el vendedor nunca lo envió y eliminó su cuenta. ¿Puedo recuperar mi dinero?</p>
-          </div>
-          <div className="info-card">
-            <h3>Regalías no Pagadas</h3>
-            <p>Soy escritor y mi editorial no me ha pagado las regalías del último trimestre.</p>
-          </div>
-          <div className="info-card">
-            <h3>Suspensión de Cuenta</h3>
-            <p>La cuenta de mi tienda en línea fue suspendida sin razón clara y no puedo acceder a fondos.</p>
-          </div>
+        {/* 1. NAV SUPERIOR */}
+        <div className="top-nav">
+          {['EE.UU.', 'Chile', 'México', 'España', 'Inmigración Global'].map((c) => (
+            <button 
+              key={c}
+              className={`nav-btn ${country === c ? 'active' : ''} ${c === 'Inmigración Global' ? 'purple' : ''}`} 
+              onClick={() => setCountry(c)}
+            >
+              {c}
+            </button>
+          ))}
         </div>
 
-        {/* 3. SECCIÓN DE INPUTS (DROPDOWN Y BOTONES) */}
+        {/* Si no hay mensajes, mostramos el HOME */}
+        {messages.length === 0 ? (
+          <div className="hero-section">
+            <h2 style={{textAlign: 'center', marginBottom: '20px', fontSize:'1.5rem'}}>
+              ¿Cómo puedo ayudarte hoy?
+            </h2>
+
+            <div className="grid-cards">
+              <div className="info-card" onClick={() => sendMessage("Producto Defectuoso")}>
+                <h3>Producto Defectuoso</h3>
+                <p>Compré una laptop que dejó de funcionar después de una semana. ¿Cuáles son mis derechos?</p>
+              </div>
+              <div className="info-card" onClick={() => sendMessage("Estafa en Marketplace")}>
+                <h3>Estafa en Marketplace</h3>
+                <p>Pagué por un artículo, el vendedor nunca lo envió y eliminó su cuenta.</p>
+              </div>
+              <div className="info-card" onClick={() => sendMessage("Regalías no Pagadas")}>
+                <h3>Regalías no Pagadas</h3>
+                <p>Soy escritor y mi editorial no me ha pagado las regalías del último trimestre.</p>
+              </div>
+              <div className="info-card" onClick={() => sendMessage("Suspensión de Cuenta")}>
+                <h3>Suspensión de Cuenta</h3>
+                <p>La cuenta de mi tienda en línea fue suspendida sin razón clara.</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Si hay mensajes, mostramos el CHAT */
+          <div style={{flex:1, overflowY:'auto', marginBottom:20, display:'flex', flexDirection:'column', gap:15}}>
+             {messages.map((msg, idx) => (
+              <div key={idx} style={{
+                padding:15, borderRadius:8, maxWidth:'80%', lineHeight:1.5,
+                alignSelf: msg.type==='user'?'flex-end':'flex-start',
+                background: msg.type==='user'?'#0055ff':'#1e2330',
+                color: msg.type==='user'?'white':'#e2e8f0',
+                border: msg.type==='bot'?'1px solid #2a3241':'none'
+              }}>
+                {msg.text.split('\n').map((line, i) => <div key={i}>{line}<br/></div>)}
+              </div>
+            ))}
+            {loading && <div style={{color:'#94a3b8', fontStyle:'italic'}}>Escribiendo...</div>}
+          </div>
+        )}
+
+        {/* 3. SECCIÓN DE INPUTS */}
         <div className="input-section">
           
-          {/* Dropdown */}
+          {/* --- AQUÍ ESTÁN LAS OPCIONES NUEVAS QUE PEDISTE --- */}
           <select className="custom-select">
             <option>Selecciona una categoría (opcional)</option>
-            <option>Derecho Civil</option>
-            <option>Derecho Laboral</option>
+            <option>Producto defectuoso o diferente</option>
+            <option>Estafa o fraude en marketplace</option>
+            <option>Suspensión de cuenta (autor/vendedor)</option>
+            <option>Regalías o pagos no recibidos</option>
+            <option>Otro tipo de problema</option>
           </select>
 
           {/* Selector de Rol */}
@@ -97,10 +179,32 @@ function LegalApp() {
             />
             <div className="chat-footer">
               <span style={{fontSize:'1.2rem', color:'#94a3b8', cursor:'pointer'}}>📎</span>
-              <button className="btn-enviar" onClick={sendMessage}>Enviar</button>
+              <button className="btn-enviar" onClick={() => sendMessage()}>Enviar</button>
             </div>
           </div>
 
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------------------------------
+  // VISTA: LOGIN
+  // ---------------------------------------
+  return (
+    <div className="split-screen">
+      <div className="left-panel">
+        <h1 style={{fontSize: '3.5rem', color: '#c5a059', marginBottom: '1rem'}}>LexAI</h1>
+        <p style={{fontSize: '1.2rem', color: '#94a3b8'}}>Tu asistente legal profesional.</p>
+      </div>
+      <div className="right-panel">
+        <div className="form-box">
+          <h2 style={{marginTop:0, color:'white'}}>Bienvenido</h2>
+          <form onSubmit={handleLogin}>
+            <input type="email" placeholder="Correo" value={email} onChange={e=>setEmail(e.target.value)} />
+            <input type="password" placeholder="Contraseña" value={password} onChange={e=>setPassword(e.target.value)} />
+            <button className="btn-login">Ingresar</button>
+          </form>
         </div>
       </div>
     </div>
